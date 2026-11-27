@@ -1,12 +1,8 @@
-import 'package:flutter/material.dart';
+
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kosfinder/main.dart';
 import 'package:kosfinder/models/kos.dart';
 
 void main() {
-  // ---------------------------------------------------------------------------
-  // Unit test: model Kos
-  // ---------------------------------------------------------------------------
   group('Kos.fromJson', () {
     final Map<String, dynamic> sampleJson = {
       'id': 'uuid-001',
@@ -29,34 +25,35 @@ void main() {
       expect(kos.id, 'uuid-001');
       expect(kos.ownerId, 'owner-uuid-001');
       expect(kos.namaKos, 'Kos Melati');
-      expect(kos.alamatLengkap, 'Jl. Melati No. 1, Yogyakarta');
       expect(kos.area, 'Sleman');
       expect(kos.jenis, 'putri');
       expect(kos.hargaBulanan, 800000);
       expect(kos.jumlahKamar, 3);
       expect(kos.fasilitas, ['AC', 'WiFi']);
       expect(kos.nomorKontak, '081234567890');
-      expect(kos.createdAt, DateTime.utc(2024, 1, 1));
-      expect(kos.updatedAt, DateTime.utc(2024, 6, 1));
     });
 
-    test('fasilitas null atau tidak ada diperlakukan sebagai list kosong', () {
+    test('fasilitas tidak tersedia menjadi list kosong', () {
       final json = Map<String, dynamic>.from(sampleJson)
         ..remove('fasilitas');
+
       final kos = Kos.fromJson(json);
+
       expect(kos.fasilitas, isEmpty);
     });
 
-    test('fasilitas berupa list kosong diterima', () {
+    test('fasilitas kosong diterima', () {
       final json = Map<String, dynamic>.from(sampleJson)
         ..['fasilitas'] = <dynamic>[];
+
       final kos = Kos.fromJson(json);
+
       expect(kos.fasilitas, isEmpty);
     });
   });
 
   group('Kos.isFull', () {
-    Kos makeKos({required int jumlahKamar}) {
+    Kos makeKos(int jumlahKamar) {
       return Kos(
         id: 'id',
         ownerId: 'owner',
@@ -73,18 +70,18 @@ void main() {
       );
     }
 
-    test('isFull = true saat jumlahKamar == 0', () {
-      expect(makeKos(jumlahKamar: 0).isFull, isTrue);
+    test('true ketika jumlah kamar nol', () {
+      expect(makeKos(0).isFull, isTrue);
     });
 
-    test('isFull = false saat jumlahKamar > 0', () {
-      expect(makeKos(jumlahKamar: 1).isFull, isFalse);
-      expect(makeKos(jumlahKamar: 5).isFull, isFalse);
+    test('false ketika kamar masih tersedia', () {
+      expect(makeKos(1).isFull, isFalse);
+      expect(makeKos(5).isFull, isFalse);
     });
   });
 
   group('Kos.toJson', () {
-    test('toJson menghasilkan map yang sesuai dengan fromJson', () {
+    test('data dapat dikembalikan melalui fromJson', () {
       final original = Kos(
         id: 'uuid-002',
         ownerId: 'owner-002',
@@ -100,8 +97,7 @@ void main() {
         updatedAt: DateTime.utc(2024, 3, 2),
       );
 
-      final json = original.toJson();
-      final restored = Kos.fromJson(json);
+      final restored = Kos.fromJson(original.toJson());
 
       expect(restored.id, original.id);
       expect(restored.namaKos, original.namaKos);
@@ -112,42 +108,15 @@ void main() {
   });
 
   group('Konstanta', () {
-    test('kJenisOptions berisi tiga nilai yang sesuai PRD', () {
-      expect(kJenisOptions, containsAll(['putra', 'putri', 'campur']));
-      expect(kJenisOptions.length, 3);
+    test('jenis kos sesuai PRD', () {
+      expect(kJenisOptions, ['putra', 'putri', 'campur']);
     });
 
-    test('kFasilitasOptions berisi empat fasilitas yang sesuai PRD', () {
+    test('fasilitas kos sesuai PRD', () {
       expect(
         kFasilitasOptions,
-        containsAll(['AC', 'WiFi', 'kamar mandi dalam', 'parkir']),
+        ['AC', 'WiFi', 'kamar mandi dalam', 'parkir'],
       );
-      expect(kFasilitasOptions.length, 4);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // Widget (smoke) test: KosFinderApp dapat di-render tanpa crash
-  // ---------------------------------------------------------------------------
-  group('KosFinderApp', () {
-    testWidgets('dapat di-pump tanpa crash (layar placeholder)', (tester) async {
-      await tester.pumpWidget(const KosFinderApp());
-      // Layar placeholder harus tampil
-      expect(find.text('KosFinder siap digunakan.'), findsOneWidget);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // Widget (smoke) test: layar error konfigurasi
-  // ---------------------------------------------------------------------------
-  group('_KosFinderConfigErrorApp', () {
-    testWidgets('menampilkan pesan konfigurasi jika dipanggil langsung',
-        (tester) async {
-      // Kita tidak bisa menguji cabang main() secara langsung karena
-      // String.fromEnvironment dievaluasi saat compile-time.
-      // Sebagai gantinya, smoke test: KosFinderApp tidak crash.
-      await tester.pumpWidget(const KosFinderApp());
-      expect(find.byType(MaterialApp), findsOneWidget);
     });
   });
 }

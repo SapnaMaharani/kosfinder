@@ -1,5 +1,11 @@
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'providers/kos_provider.dart';
+import 'repositories/kos_repository.dart';
+import 'screens/kos_list_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,40 +26,29 @@ Future<void> main() async {
   runApp(const KosFinderApp());
 }
 
-/// Widget root yang dijalankan saat konfigurasi Supabase tersedia.
 class KosFinderApp extends StatelessWidget {
   const KosFinderApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'KosFinder',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
+    return ChangeNotifierProvider(
+      create: (_) => KosProvider(
+        repository: KosRepository(),
       ),
-      home: const _PlaceholderScreen(),
-    );
-  }
-}
-
-/// Layar sementara — konten nyata akan ditambahkan pada T02 dan seterusnya.
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('KosFinder')),
-      body: const Center(
-        child: Text('KosFinder siap digunakan.'),
+      child: MaterialApp(
+        title: 'KosFinder',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.indigo,
+          ),
+          useMaterial3: true,
+        ),
+        home: const KosListScreen(),
       ),
     );
   }
 }
 
-/// Widget root yang ditampilkan saat SUPABASE_URL atau SUPABASE_ANON_KEY
-/// tidak dikonfigurasi melalui --dart-define.
 class _KosFinderConfigErrorApp extends StatelessWidget {
   const _KosFinderConfigErrorApp();
 
