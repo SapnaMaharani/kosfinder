@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/kos.dart';
 import '../providers/kos_provider.dart';
 import 'kos_detail_screen.dart';
+import 'about_screen.dart';
 
 class KosListScreen extends StatefulWidget {
   const KosListScreen({super.key});
@@ -31,6 +32,20 @@ class _KosListScreenState extends State<KosListScreen> {
       appBar: AppBar(
         title: const Text('KosFinder'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'Tentang Aplikasi',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AboutScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<KosProvider>(
         builder: (context, provider, child) {
