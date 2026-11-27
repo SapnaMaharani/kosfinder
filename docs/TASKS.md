@@ -1,3 +1,4 @@
+
 # Daftar Task Implementasi KosFinder (Vertical Slices)
 
 Acuan: `docs/PRD.md`, `docs/ARCHITECTURE.md`, dan `AGENTS.md`. Setiap slice menghasilkan aplikasi yang dapat dijalankan dan diuji (`flutter analyze`, `flutter test`, serta run di device Android).
@@ -7,7 +8,7 @@ Acuan: `docs/PRD.md`, `docs/ARCHITECTURE.md`, dan `AGENTS.md`. Setiap slice meng
 | ID | Tujuan | Story & AC | File yang Boleh Diubah | Cara Menguji | Status |
 |---|---|---|---|---|---|
 | T01 | Minta persetujuan pengguna terlebih dahulu sebelum memasang package (`provider`, `supabase_flutter`, `url_launcher`) ke `pubspec.yaml`; setup konfigurasi `--dart-define` Supabase di `main.dart` dan buat model `Kos`. | `US01-AC1`, `US03-AC1` | `pubspec.yaml`, `lib/main.dart`, `lib/models/kos.dart`, `test/widget_test.dart` | `flutter analyze && flutter test test/widget_test.dart` dan jalankan app shell dengan `--dart-define` di Android setelah package disetujui & terpasang. | DONE |
-| T02 | Buat `KosRepository`, `KosProvider`, dan `KosListScreen` untuk memuat daftar kos publik tanpa login termasuk badge **Penuh** saat `jumlah_kamar == 0`, state kosong, dan error koneksi. | `US01` (`US01-AC1`, `US01-AC2`, `US01-AC3`) | `lib/repositories/kos_repository.dart`, `lib/providers/kos_provider.dart`, `lib/screens/kos_list_screen.dart`, `lib/main.dart`, `test/kos_list_screen_test.dart` | `flutter analyze && flutter test test/kos_list_screen_test.dart` serta uji buka daftar kos di device (normal, kamar `0` tampil **Penuh**, kosong, airplane mode). | TODO |
+| T02 | Buat `KosRepository`, `KosProvider`, dan `KosListScreen` untuk memuat daftar kos publik tanpa login termasuk badge **Penuh** saat `jumlah_kamar == 0`, state kosong, dan error koneksi. | `US01` (`US01-AC1`, `US01-AC2`, `US01-AC3`) | `lib/repositories/kos_repository.dart`, `lib/providers/kos_provider.dart`, `lib/screens/kos_list_screen.dart`, `lib/main.dart`, `test/kos_list_screen_test.dart` | `flutter analyze && flutter test test/kos_list_screen_test.dart` serta uji buka daftar kos di device (normal, kamar `0` tampil **Penuh**, kosong, airplane mode). | DONE |
 | T03 | Buat `KosDetailScreen` (info lengkap, status **Penuh** saat kamar `0`, tombol WhatsApp normalisasi `08`→`62`, alternatif salin/telepon, error offline) dan `AboutScreen` (`<NIM> - <NAMA>`). | `US03` (`US03-AC1`, `US03-AC2`, `US03-AC3`) | `lib/screens/kos_detail_screen.dart`, `lib/screens/about_screen.dart`, `lib/utils/contact_helper.dart`, `lib/screens/kos_list_screen.dart`, `lib/main.dart`, `test/kos_detail_test.dart` | `flutter analyze && flutter test test/kos_detail_test.dart` serta uji ketuk kos (termasuk status **Penuh**), buka WhatsApp/salin/telepon, dan buka About di Android. | TODO |
 
 ## Slice 2: Pencarian dan Filter
