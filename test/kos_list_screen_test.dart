@@ -9,17 +9,11 @@ import 'package:kosfinder/providers/kos_provider.dart';
 import 'package:kosfinder/repositories/kos_repository.dart';
 import 'package:kosfinder/screens/kos_list_screen.dart';
 
-// Fake repository untuk pengujian tanpa koneksi Supabase asli.
-class FakeKosRepository extends KosRepository {
+class SearchFakeKosRepository extends KosRepository {
   final List<Kos> data;
-  final bool shouldFail;
-  final Duration delay;
 
-  FakeKosRepository({
-    this.data = const [],
-    this.shouldFail = false,
-    this.delay = Duration.zero,
-  }) : super(
+  SearchFakeKosRepository({required this.data})
+      : super(
           client: SupabaseClient(
             'https://example.supabase.co',
             'test-key',
@@ -31,32 +25,24 @@ class FakeKosRepository extends KosRepository {
 
   @override
   Future<List<Kos>> getPublicKos() async {
-    if (delay > Duration.zero) {
-      await Future.delayed(delay);
-    }
-
-    if (shouldFail) {
-      throw Exception('Koneksi gagal');
-    }
-
     return data;
   }
 }
 
-// Membuat data kos untuk kebutuhan pengujian.
-Kos createKos({
+Kos createSearchKos({
   required String nama,
-  required int jumlahKamar,
+  required String alamat,
+  required String area,
 }) {
   return Kos(
     id: nama,
     ownerId: 'owner-001',
     namaKos: nama,
-    alamatLengkap: 'Jl. Melati No. 1',
-    area: 'Singaraja',
+    alamatLengkap: alamat,
+    area: area,
     jenis: 'putri',
     hargaBulanan: 850000,
-    jumlahKamar: jumlahKamar,
+    jumlahKamar: 3,
     fasilitas: const ['WiFi', 'AC'],
     nomorKontak: '081234567890',
     createdAt: DateTime.utc(2024),
@@ -64,8 +50,7 @@ Kos createKos({
   );
 }
 
-// Membuat aplikasi pengujian dengan repository palsu.
-Widget createTestApp(FakeKosRepository repository) {
+Widget createSearchTestApp(SearchFakeKosRepository repository) {
   return ChangeNotifierProvider(
     create: (_) => KosProvider(repository: repository),
     child: const MaterialApp(
@@ -75,121 +60,145 @@ Widget createTestApp(FakeKosRepository repository) {
 }
 
 void main() {
-  group('KosListScreen', () {
-    // Pengujian 1: Daftar kos berhasil ditampilkan.
+  group('Kos Search Test', () {
+    final kosData = [
+      createSearchKos(
+        nama: 'Kos Melati',
+        alamat: 'Jl. Pendidikan No. 10',
+        area: 'Singaraja',
+      ),
+      createSearchKos(
+        nama: 'Kos Sejahtera',
+        alamat: 'Jl. Udayana No. 25',
+        area: 'Singaraja',
+      ),
+      createSearchKos(
+        nama: 'Kos Harmoni',
+        alamat: 'Jl. Ahmad Yani No. 15',
+        area: 'Denpasar',
+      ),
+    ];
+
+    // Pengujian 1: Pencarian berdasarkan nama kos.
     testWidgets(
-      'menampilkan daftar kos dari repository',
+      'mencari kos berdasarkan nama',
       (tester) async {
-        final repository = FakeKosRepository(
-          data: [
-            createKos(
-              nama: 'Kos Melati',
-              jumlahKamar: 3,
-            ),
-          ],
+        final repository = SearchFakeKosRepository(
+          data: kosData,
         );
 
-        await tester.pumpWidget(createTestApp(repository));
+        await tester.pumpWidget(
+          createSearchTestApp(repository),
+        );
         await tester.pumpAndSettle();
 
-        expect(find.text('KosFinder'), findsOneWidget);
-        expect(find.text('Kos Melati'), findsOneWidget);
-        expect(
-          find.text('Kamar tersedia: 3'),
-          findsOneWidget,
+        await tester.enterText(
+          find.byType(TextField),
+          'Kos Melati',
         );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Kos Melati'), findsNWidgets(2));
+        expect(find.text('Kos Sejahtera'), findsNothing);
+        expect(find.text('Kos Harmoni'), findsNothing);
       },
     );
 
-    // Pengujian 2: Kos penuh menampilkan label Penuh.
+    // Pengujian 2: Pencarian berdasarkan alamat.
     testWidgets(
-      'menampilkan label Penuh jika kamar nol',
+      'mencari kos berdasarkan alamat lengkap',
       (tester) async {
-        final repository = FakeKosRepository(
-          data: [
-            createKos(
-              nama: 'Kos Sejahtera',
-              jumlahKamar: 0,
-            ),
-          ],
+        final repository = SearchFakeKosRepository(
+          data: kosData,
         );
 
-        await tester.pumpWidget(createTestApp(repository));
+        await tester.pumpWidget(
+          createSearchTestApp(repository),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.byType(TextField),
+          'Udayana',
+        );
         await tester.pumpAndSettle();
 
         expect(find.text('Kos Sejahtera'), findsOneWidget);
-        expect(find.text('Penuh'), findsOneWidget);
-
-        expect(
-          find.text('Kamar tersedia: 0 (Penuh)'),
-          findsOneWidget,
-        );
+        expect(find.text('Kos Melati'), findsNothing);
       },
     );
 
-    // Pengujian 3: Data kosong.
+    // Pengujian 3: Pencarian berdasarkan area.
     testWidgets(
-      'menampilkan pesan ketika data kosong',
+      'mencari kos berdasarkan area',
       (tester) async {
-        final repository = FakeKosRepository();
+        final repository = SearchFakeKosRepository(
+          data: kosData,
+        );
 
-        await tester.pumpWidget(createTestApp(repository));
+        await tester.pumpWidget(
+          createSearchTestApp(repository),
+        );
         await tester.pumpAndSettle();
 
-        expect(
-          find.text('Belum ada data kos tersedia.'),
-          findsOneWidget,
+        await tester.enterText(
+          find.byType(TextField),
+          'Singaraja',
         );
-      },
-    );
-
-    // Pengujian 4: Loading saat data sedang dimuat.
-    testWidgets(
-      'menampilkan loading saat data dimuat',
-      (tester) async {
-        final repository = FakeKosRepository(
-          data: [
-            createKos(
-              nama: 'Kos Melati',
-              jumlahKamar: 3,
-            ),
-          ],
-          delay: const Duration(seconds: 2),
-        );
-
-        await tester.pumpWidget(createTestApp(repository));
-        await tester.pump();
-
-        expect(
-          find.byType(CircularProgressIndicator),
-          findsOneWidget,
-        );
-
-        await tester.pump(const Duration(seconds: 2));
         await tester.pumpAndSettle();
 
         expect(find.text('Kos Melati'), findsOneWidget);
+        expect(find.text('Kos Sejahtera'), findsOneWidget);
+        expect(find.text('Kos Harmoni'), findsNothing);
       },
     );
 
-    // Pengujian 5: Error koneksi dan tombol coba lagi.
+    // Pengujian 4: Pencarian tidak membedakan huruf besar dan kecil.
     testWidgets(
-      'menampilkan pesan error dan tombol coba lagi',
+      'pencarian tidak membedakan huruf besar dan kecil',
       (tester) async {
-        final repository = FakeKosRepository(
-          shouldFail: true,
+        final repository = SearchFakeKosRepository(
+          data: kosData,
         );
 
-        await tester.pumpWidget(createTestApp(repository));
+        await tester.pumpWidget(
+          createSearchTestApp(repository),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.byType(TextField),
+          'SINGARAJA',
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Kos Melati'), findsOneWidget);
+        expect(find.text('Kos Sejahtera'), findsOneWidget);
+        expect(find.text('Kos Harmoni'), findsNothing);
+      },
+    );
+
+    // Pengujian 5: Pesan ketika hasil pencarian kosong.
+    testWidgets(
+      'menampilkan pesan jika kos tidak ditemukan',
+      (tester) async {
+        final repository = SearchFakeKosRepository(
+          data: kosData,
+        );
+
+        await tester.pumpWidget(
+          createSearchTestApp(repository),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.byType(TextField),
+          'Bandung',
+        );
         await tester.pumpAndSettle();
 
         expect(
-          find.text('Gagal memuat daftar kos.'),
-          findsOneWidget,
-        );
-
-        expect(
-          find.text('Coba Lagi'),
+          find.text('Kos tidak ditemukan.'),
           findsOneWidget,
         );
       },

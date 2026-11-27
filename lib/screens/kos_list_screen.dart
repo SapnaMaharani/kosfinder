@@ -15,6 +15,9 @@ class KosListScreen extends StatefulWidget {
 }
 
 class _KosListScreenState extends State<KosListScreen> {
+  final TextEditingController _searchController =
+      TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +27,12 @@ class _KosListScreenState extends State<KosListScreen> {
         context.read<KosProvider>().loadKos();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -84,23 +93,53 @@ class _KosListScreenState extends State<KosListScreen> {
             );
           }
 
-          if (provider.kosList.isEmpty) {
-            return const Center(
-              child: Text('Belum ada data kos tersedia.'),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: provider.loadKos,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: provider.kosList.length,
-              itemBuilder: (context, index) {
-                final kos = provider.kosList[index];
-
-                return _KosCard(kos: kos);
-              },
-            ),
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: provider.searchKos,
+                  decoration: InputDecoration(
+                    hintText: 'Cari nama, alamat, atau area kos...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              provider.searchKos('');
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: provider.kosList.isEmpty
+                    ? Center(
+                        child: Text(
+                          provider.searchQuery.isNotEmpty
+                              ? 'Kos tidak ditemukan.'
+                              : 'Belum ada data kos tersedia.',
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: provider.loadKos,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: provider.kosList.length,
+                          itemBuilder: (context, index) {
+                            final kos = provider.kosList[index];
+                            return _KosCard(kos: kos);
+                          },
+                        ),
+                      ),
+              ),
+            ],
           );
         },
       ),
@@ -145,9 +184,7 @@ class _KosCard extends StatelessWidget {
                     const Chip(
                       label: Text('Penuh'),
                       backgroundColor: Colors.redAccent,
-                      labelStyle: TextStyle(
-                        color: Colors.white,
-                      ),
+                      labelStyle: TextStyle(color: Colors.white),
                     ),
                 ],
               ),
@@ -169,9 +206,7 @@ class _KosCard extends StatelessWidget {
                 '${kos.isFull ? ' (Penuh)' : ''}',
               ),
               const SizedBox(height: 8),
-              Text(
-                'Fasilitas: ${kos.fasilitas.join(', ')}',
-              ),
+              Text('Fasilitas: ${kos.fasilitas.join(', ')}'),
             ],
           ),
         ),
