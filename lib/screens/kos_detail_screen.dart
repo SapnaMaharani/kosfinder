@@ -15,12 +15,16 @@ class KosDetailScreen extends StatelessWidget {
 
   Future<void> _openWhatsApp(BuildContext context) async {
     try {
-      final success = await ContactHelper.openWhatsApp(kos.nomorKontak);
+      final success = await ContactHelper.openWhatsApp(
+        kos.nomorKontak,
+      );
 
       if (!success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('WhatsApp tidak dapat dibuka. Silakan salin nomor.'),
+            content: Text(
+              'WhatsApp tidak dapat dibuka. Silakan salin nomor.',
+            ),
           ),
         );
       }
@@ -37,12 +41,16 @@ class KosDetailScreen extends StatelessWidget {
 
   Future<void> _makePhoneCall(BuildContext context) async {
     try {
-      final success = await ContactHelper.makePhoneCall(kos.nomorKontak);
+      final success = await ContactHelper.makePhoneCall(
+        kos.nomorKontak,
+      );
 
       if (!success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Aplikasi telepon tidak dapat dibuka.'),
+            content: Text(
+              'Aplikasi telepon tidak dapat dibuka.',
+            ),
           ),
         );
       }
@@ -59,7 +67,9 @@ class KosDetailScreen extends StatelessWidget {
 
   Future<void> _copyPhoneNumber(BuildContext context) async {
     await Clipboard.setData(
-      ClipboardData(text: ContactHelper.normalizePhone(kos.nomorKontak)),
+      ClipboardData(
+        text: ContactHelper.normalizePhone(kos.nomorKontak),
+      ),
     );
 
     if (context.mounted) {
@@ -69,6 +79,98 @@ class KosDetailScreen extends StatelessWidget {
         ),
       );
     }
+  }
+
+  Widget _buildRoomStatus(BuildContext context) {
+    final isFull = kos.isFull;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isFull
+            ? Colors.red.withValues(alpha: 0.08)
+            : Colors.green.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isFull ? Colors.red : Colors.green,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isFull
+                ? Icons.cancel_outlined
+                : Icons.check_circle_outline,
+            color: isFull ? Colors.red : Colors.green,
+            size: 30,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isFull ? 'Kos Penuh' : 'Kos Tersedia',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isFull ? Colors.red : Colors.green,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isFull
+                      ? 'Saat ini tidak ada kamar tersedia.'
+                      : '${kos.jumlahKamar} kamar masih tersedia.',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInformation(
+    String label,
+    String value, {
+    IconData? icon,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 21, color: Colors.grey[700]),
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -84,34 +186,52 @@ class KosDetailScreen extends StatelessWidget {
           children: [
             Text(
               kos.namaKos,
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-            const SizedBox(height: 16),
 
-            Text('Area: ${kos.area}'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 20),
 
-            Text('Jenis: ${kos.jenis}'),
-            const SizedBox(height: 8),
+            _buildRoomStatus(context),
 
-            Text('Alamat: ${kos.alamatLengkap}'),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
 
-            Text('Harga: Rp${kos.hargaBulanan} / bulan'),
-            const SizedBox(height: 8),
-
-            Text('Kamar tersedia: ${kos.jumlahKamar}'),
-            const SizedBox(height: 8),
-
-            Text(
-              'Status: ${kos.isFull ? 'Penuh' : 'Tersedia'}',
+            const Text(
+              'Informasi Kos',
               style: TextStyle(
-                color: kos.isFull ? Colors.red : Colors.green,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
 
             const SizedBox(height: 16),
+
+            _buildInformation(
+              'Area',
+              kos.area,
+              icon: Icons.location_on_outlined,
+            ),
+
+            _buildInformation(
+              'Jenis Kos',
+              kos.jenis,
+              icon: Icons.home_outlined,
+            ),
+
+            _buildInformation(
+              'Alamat Lengkap',
+              kos.alamatLengkap,
+              icon: Icons.map_outlined,
+            ),
+
+            _buildInformation(
+              'Harga Bulanan',
+              'Rp${kos.hargaBulanan} / bulan',
+              icon: Icons.payments_outlined,
+            ),
+
+            const Divider(height: 32),
 
             const Text(
               'Fasilitas',
@@ -120,36 +240,45 @@ class KosDetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
 
-            Wrap(
-              spacing: 8,
-              children: kos.fasilitas
-                  .map(
-                    (fasilitas) => Chip(
-                      label: Text(fasilitas),
+            const SizedBox(height: 12),
+
+            if (kos.fasilitas.isEmpty)
+              const Text('Belum ada fasilitas.')
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: kos.fasilitas.map((fasilitas) {
+                  return Chip(
+                    avatar: const Icon(
+                      Icons.check_circle_outline,
+                      size: 18,
                     ),
-                  )
-                  .toList(),
-            ),
+                    label: Text(fasilitas),
+                  );
+                }).toList(),
+              ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
             const Text(
-              'Nomor Kontak',
+              'Informasi Kontak',
               style: TextStyle(
-                fontWeight: FontWeight.bold,
                 fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
 
-            Text(
+            const SizedBox(height: 12),
+
+            _buildInformation(
+              'Nomor Kontak Pemilik',
               kos.nomorKontak,
-              style: const TextStyle(fontSize: 16),
+              icon: Icons.phone_outlined,
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             SizedBox(
               width: double.infinity,
@@ -165,7 +294,7 @@ class KosDetailScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             Row(
               children: [

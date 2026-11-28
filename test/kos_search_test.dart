@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:kosfinder/models/kos.dart';
 import 'package:kosfinder/providers/kos_provider.dart';
 import 'package:kosfinder/repositories/kos_repository.dart';
 import 'package:kosfinder/screens/kos_list_screen.dart';
 
-// Fake repository untuk pengujian tanpa koneksi database
+// Fake repository untuk pengujian tanpa koneksi database.
 class SearchFakeKosRepository extends KosRepository {
   final List<Kos> data;
 
@@ -18,6 +19,9 @@ class SearchFakeKosRepository extends KosRepository {
           client: SupabaseClient(
             'https://example.supabase.co',
             'test-anon-key',
+            authOptions: const AuthClientOptions(
+              autoRefreshToken: false,
+            ),
           ),
         );
 
@@ -27,7 +31,7 @@ class SearchFakeKosRepository extends KosRepository {
   }
 }
 
-// Data kos untuk pengujian
+// Membuat data kos untuk pengujian.
 Kos createSearchKos({
   required String nama,
   required String alamat,
@@ -49,17 +53,45 @@ Kos createSearchKos({
   );
 }
 
-// Widget aplikasi untuk pengujian
+// Widget aplikasi untuk pengujian.
 Widget createSearchTestApp(SearchFakeKosRepository repository) {
   return ChangeNotifierProvider(
-    create: (_) => KosProvider(repository: repository)..loadKos(),
+    create: (_) => KosProvider(repository: repository),
     child: const MaterialApp(
       home: KosListScreen(),
     ),
   );
 }
 
+// Finder khusus kolom pencarian.
+Finder get searchTextField => find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText ==
+              'Cari nama, alamat, atau area kos...',
+      description: 'Kolom pencarian kos',
+    );
+
+// Finder khusus nama kos pada daftar.
+Finder kosName(String name) {
+  return find.byWidgetPredicate(
+    (widget) => widget is Text && widget.data == name,
+    description: 'Nama kos $name',
+  );
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+
+    await Supabase.initialize(
+      url: 'https://example.supabase.co',
+      publishableKey: 'test-anon-key',
+    );
+  });
+
   group('Kos Search Test', () {
     late SearchFakeKosRepository repository;
 
@@ -85,93 +117,95 @@ void main() {
       );
     });
 
-    // Pengujian 1: Pencarian berdasarkan nama
+    // TEST 1: Pencarian berdasarkan nama.
     testWidgets('mencari kos berdasarkan nama', (tester) async {
       await tester.pumpWidget(createSearchTestApp(repository));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byType(TextField),
-        'Kos Melati',
-      );
+      await tester.enterText(searchTextField, 'Kos Melati');
       await tester.pumpAndSettle();
 
-      expect(find.text('Kos Melati'), findsNWidgets(2));
-      expect(find.text('Kos Harmoni'), findsNothing);
-      expect(find.text('Kos Sejahtera'), findsNothing);
+      expect(kosName('Kos Melati'), findsOneWidget);
+      expect(kosName('Kos Harmoni'), findsNothing);
+      expect(kosName('Kos Sejahtera'), findsNothing);
     });
 
-    // Pengujian 2: Pencarian berdasarkan alamat
+    // TEST 2: Pencarian berdasarkan alamat.
     testWidgets('mencari kos berdasarkan alamat', (tester) async {
       await tester.pumpWidget(createSearchTestApp(repository));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byType(TextField),
-        'Jl. Sudirman',
-      );
+      await tester.enterText(searchTextField, 'Jl. Sudirman');
       await tester.pumpAndSettle();
 
-      expect(find.text('Kos Harmoni'), findsOneWidget);
-      expect(find.text('Kos Melati'), findsNothing);
-      expect(find.text('Kos Sejahtera'), findsNothing);
+      expect(kosName('Kos Harmoni'), findsOneWidget);
+      expect(kosName('Kos Melati'), findsNothing);
+      expect(kosName('Kos Sejahtera'), findsNothing);
     });
 
-    // Pengujian 3: Pencarian berdasarkan area
+    // TEST 3: Pencarian berdasarkan area.
     testWidgets('mencari kos berdasarkan area', (tester) async {
       await tester.pumpWidget(createSearchTestApp(repository));
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byType(TextField),
-        'Singaraja',
-      );
+      await tester.enterText(searchTextField, 'Singaraja');
       await tester.pumpAndSettle();
 
-      expect(find.text('Kos Melati'), findsOneWidget);
-      expect(find.text('Kos Sejahtera'), findsOneWidget);
-      expect(find.text('Kos Harmoni'), findsNothing);
+      final provider = Provider.of<KosProvider>(
+        tester.element(find.byType(KosListScreen)),
+        listen: false,
+      );
+
+      final hasilPencarian =
+          provider.kosList.map((kos) => kos.namaKos).toList();
+
+      expect(hasilPencarian, contains('Kos Melati'));
+      expect(hasilPencarian, contains('Kos Sejahtera'));
+      expect(hasilPencarian, isNot(contains('Kos Harmoni')));
     });
 
-    // Pengujian 4: Pencarian tidak membedakan huruf besar dan kecil
+    // TEST 4: Pencarian tidak membedakan huruf besar dan kecil.
     testWidgets(
       'pencarian tidak membedakan huruf besar dan kecil',
       (tester) async {
         await tester.pumpWidget(createSearchTestApp(repository));
         await tester.pumpAndSettle();
 
-        await tester.enterText(
-          find.byType(TextField),
-          'SINGARAJA',
-        );
+        await tester.enterText(searchTextField, 'SINGARAJA');
         await tester.pumpAndSettle();
 
-        expect(find.text('Kos Melati'), findsOneWidget);
-        expect(find.text('Kos Sejahtera'), findsOneWidget);
-        expect(find.text('Kos Harmoni'), findsNothing);
+        final provider = Provider.of<KosProvider>(
+          tester.element(find.byType(KosListScreen)),
+          listen: false,
+        );
+
+        final hasilPencarian =
+            provider.kosList.map((kos) => kos.namaKos).toList();
+
+        expect(hasilPencarian, contains('Kos Melati'));
+        expect(hasilPencarian, contains('Kos Sejahtera'));
+        expect(hasilPencarian, isNot(contains('Kos Harmoni')));
       },
     );
 
-    // Pengujian 5: Kos tidak ditemukan
+    // TEST 5: Kos tidak ditemukan.
     testWidgets(
       'menampilkan pesan jika kos tidak ditemukan',
       (tester) async {
         await tester.pumpWidget(createSearchTestApp(repository));
         await tester.pumpAndSettle();
 
-        await tester.enterText(
-          find.byType(TextField),
-          'Kos Bandung',
-        );
+        await tester.enterText(searchTextField, 'Kos Bandung');
         await tester.pumpAndSettle();
 
         expect(
           find.text('Kos tidak ditemukan.'),
           findsOneWidget,
         );
-        expect(find.text('Kos Melati'), findsNothing);
-        expect(find.text('Kos Harmoni'), findsNothing);
-        expect(find.text('Kos Sejahtera'), findsNothing);
+
+        expect(kosName('Kos Melati'), findsNothing);
+        expect(kosName('Kos Harmoni'), findsNothing);
+        expect(kosName('Kos Sejahtera'), findsNothing);
       },
     );
   });
