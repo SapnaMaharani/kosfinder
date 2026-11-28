@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -28,9 +27,7 @@ class _MyKosScreenState extends State<MyKosScreen> {
   Future<void> _openForm({Kos? kos}) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => KosFormScreen(kos: kos),
-      ),
+      MaterialPageRoute(builder: (_) => KosFormScreen(kos: kos)),
     );
   }
 
@@ -40,14 +37,10 @@ class _MyKosScreenState extends State<MyKosScreen> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Hapus Kos'),
-          content: Text(
-            'Apakah kamu yakin ingin menghapus ${kos.namaKos}?',
-          ),
+          content: Text('Apakah kamu yakin ingin menghapus ${kos.namaKos}?'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
+              onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('Batal'),
             ),
             ElevatedButton(
@@ -55,9 +48,7 @@ class _MyKosScreenState extends State<MyKosScreen> {
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
+              onPressed: () => Navigator.pop(dialogContext, true),
               child: const Text('Hapus'),
             ),
           ],
@@ -72,34 +63,74 @@ class _MyKosScreenState extends State<MyKosScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Kos berhasil dihapus'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Kos berhasil dihapus')));
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Gagal menghapus kos: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal menghapus kos: $e')));
     }
+  }
+
+  Widget _buildStatistics(List<Kos> kosList) {
+    final total = kosList.length;
+    final penuh = kosList.where((kos) => kos.isFull).length;
+    final tersedia = total - penuh;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Statistik Kos Saya',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  title: 'Total Kos',
+                  value: total.toString(),
+                  icon: Icons.home_work,
+                  color: Colors.blue,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _StatCard(
+                  title: 'Tersedia',
+                  value: tersedia.toString(),
+                  icon: Icons.check_circle,
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _StatCard(
+                  title: 'Penuh',
+                  value: penuh.toString(),
+                  icon: Icons.block,
+                  color: Colors.red,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kos Saya'),
-      ),
+      appBar: AppBar(title: const Text('Kos Saya')),
       body: Consumer<KosProvider>(
         builder: (context, provider, child) {
           if (provider.isOwnerLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (provider.ownerErrorMessage != null) {
@@ -130,50 +161,47 @@ class _MyKosScreenState extends State<MyKosScreen> {
             );
           }
 
-          if (provider.myKosList.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: provider.loadMyKos,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 150),
-                  Icon(
-                    Icons.home_work_outlined,
-                    size: 64,
-                    color: Colors.grey,
-                  ),
-                  SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      'Kamu belum memiliki data kos.',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Center(
-                    child: Text(
-                      'Tekan tombol + untuk menambahkan kos.',
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
+          final kosList = provider.myKosList;
 
           return RefreshIndicator(
             onRefresh: provider.loadMyKos,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: provider.myKosList.length,
-              itemBuilder: (context, index) {
-                final kos = provider.myKosList[index];
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                _buildStatistics(kosList),
 
-                return _MyKosCard(
-                  kos: kos,
-                  onEdit: () => _openForm(kos: kos),
-                  onDelete: () => _deleteKos(kos),
-                );
-              },
+                if (kosList.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 100),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.home_work_outlined,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Kamu belum memiliki data kos.',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        SizedBox(height: 8),
+                        Text('Tekan tombol + untuk menambahkan kos.'),
+                      ],
+                    ),
+                  )
+                else
+                  ...kosList.map(
+                    (kos) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _MyKosCard(
+                        kos: kos,
+                        onEdit: () => _openForm(kos: kos),
+                        onDelete: () => _deleteKos(kos),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           );
         },
@@ -182,6 +210,49 @@ class _MyKosScreenState extends State<MyKosScreen> {
         onPressed: () => _openForm(),
         icon: const Icon(Icons.add),
         label: const Text('Tambah Kos'),
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -215,12 +286,11 @@ class _MyKosCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
-                if (kos.isFull)
-                  const Chip(
-                    label: Text('Penuh'),
-                    backgroundColor: Colors.redAccent,
-                    labelStyle: TextStyle(color: Colors.white),
-                  ),
+                Chip(
+                  label: Text(kos.isFull ? 'Penuh' : 'Tersedia'),
+                  backgroundColor: kos.isFull ? Colors.redAccent : Colors.green,
+                  labelStyle: const TextStyle(color: Colors.white),
+                ),
               ],
             ),
             const SizedBox(height: 8),
