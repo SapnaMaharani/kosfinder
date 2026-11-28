@@ -1,3 +1,4 @@
+
 # Arsitektur Aplikasi: KosFinder (Versi 1)
 
 Dokumen ini mengacu pada `docs/PRD.md` dan `AGENTS.md` dengan pendekatan paling sederhana untuk Flutter (Android) dan Supabase.
@@ -81,3 +82,35 @@ URL dan anon key **tidak** ditulis di kode maupun repository. Keduanya disuntikk
 | `url_launcher` | Membuka WhatsApp (`https://wa.me/62...`) dan dialer telepon (`tel:...`) sebagai alternatif saat WhatsApp tidak tersedia. | `US03` |
 
 *Catatan: Salin nomor menggunakan `Clipboard` bawaan Flutter (`flutter/services.dart`) dan ikon menggunakan Material Icons bawaan sehingga tidak perlu package tambahan lain.*
+
+## 7. Keputusan Teknis (ADR Mini)
+
+### K1: Otorisasi menggunakan Row Level Security (RLS) Supabase
+**Alasan:** Hak akses data harus ditegakkan langsung pada backend agar pemilik hanya dapat mengelola kos miliknya sendiri.
+
+**Konsekuensi:** Operasi tambah, ubah, dan hapus harus mengikuti policy RLS, serta pengujian akses dilakukan menggunakan dua akun pemilik berbeda.
+
+### K2: Arsitektur menggunakan pola Screen – Provider – Repository
+**Alasan:** Pemisahan tanggung jawab membuat tampilan, pengelolaan state, dan akses database lebih terstruktur.
+
+**Konsekuensi:** Screen berkomunikasi melalui Provider, sedangkan operasi database dilakukan melalui Repository.
+
+### K3: Provider digunakan untuk pengelolaan state
+**Alasan:** Provider dipilih sebagai state management agar perubahan data dan status aplikasi dapat dikelola secara terpusat.
+
+**Konsekuensi:** Pengelolaan state menggunakan ChangeNotifier dan Provider tanpa menambahkan framework state management lain.
+
+### K4: Supabase digunakan sebagai backend utama
+**Alasan:** Supabase menyediakan autentikasi dan database PostgreSQL dalam satu layanan sehingga sesuai dengan kebutuhan KosFinder versi pertama.
+
+**Konsekuensi:** Data kos disimpan pada tabel `public.kos`, sedangkan autentikasi pemilik menggunakan Supabase Auth.
+
+### K5: Konfigurasi Supabase menggunakan --dart-define
+**Alasan:** URL dan anon key tidak boleh ditulis langsung di dalam kode sumber atau repository.
+
+**Konsekuensi:** Nilai konfigurasi diberikan ketika menjalankan atau membangun aplikasi, sedangkan `service_role` key tidak boleh digunakan pada aplikasi klien.
+
+### K6: Integrasi WhatsApp dan telepon menggunakan url_launcher
+**Alasan:** Aplikasi dapat mengarahkan pengguna ke layanan WhatsApp dan telepon tanpa perlu membangun sistem komunikasi sendiri.
+
+**Konsekuensi:** WhatsApp menggunakan tautan `wa.me` dan telepon menggunakan skema `tel:`, sedangkan fungsi salin nomor menggunakan Clipboard bawaan Flutter.
