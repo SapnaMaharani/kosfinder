@@ -68,9 +68,9 @@
 **US05 – Tambah Kos**
 - **US05-AC1:** *Given* pemilik login, *When* mengisi kolom wajib (`nama kos`, `alamat lengkap`, `area`, `jenis`, `harga > 0`, `kamar >= 0`, kontak `08`/`+62`) dengan 0 atau lebih fasilitas baku (opsional) lalu simpan, *Then* backend menyimpan `owner_id = auth.uid()` dan kos langsung tayang.
 - **US05-AC2:** *Given* kolom wajib kosong, `harga <= 0`, `kamar < 0`, kontak bukan `08`/`+62`, atau request tanpa token valid, *When* dikirim, *Then* UI dan constraint/RLS backend menolak penyimpanan.
+- **US05-AC3 (Kejelasan Lokasi):** *Given* pemilik sedang menambahkan data kos, *When* pemilik mengisi area dan alamat lengkap lalu menyimpan data, *Then* informasi area dan alamat lengkap tersimpan dengan jelas, ditampilkan pada daftar atau detail kos, dan dapat digunakan oleh pencari dalam pencarian berdasarkan lokasi.
 
 **US06 – Ubah & Hapus Kos Sendiri**
 - **US06-AC1:** *Given* pemilik login dan memilih kos miliknya, *When* mengubah data (mis. kamar `0` atau kosongkan fasilitas) atau menghapus, *Then* data terbarui (badge **Penuh**) atau terhapus permanen dari DB.
 - **US06-AC2 (Data kosong):** *Given* pemilik belum punya kos, *When* membuka daftar kosnya, *Then* tampil state kosong.
 - **US06-AC3 (Akses pemilik lain):** *Given* Pemilik A mencoba mengubah/menghapus kos Pemilik B (termasuk manipulasi ID API), *When* dikirim ke Supabase, *Then* RLS backend menolak operasi sehingga data milik Pemilik B tetap utuh dan tidak berubah, serta aplikasi menampilkan pesan akses ditolak.
-

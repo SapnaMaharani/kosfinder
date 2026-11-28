@@ -39,6 +39,12 @@ Acuan: `docs/PRD.md`, `docs/ARCHITECTURE.md`, dan `AGENTS.md`. Setiap slice meng
 |---|---|---|---|---|---|
 | T11 | Tambah aksi cepat pembaruan jumlah kamar di `OwnerDashboardScreen` serta uji end-to-end sinkronisasi status `Tersedia`/badge **Penuh** (`0`) ke daftar & detail publik dalam `≤ 3 detik`. | `US01-AC1`, `US03-AC1`, `US06-AC1` | `lib/repositories/kos_repository.dart`, `lib/providers/kos_provider.dart`, `lib/screens/owner_dashboard_screen.dart`, `lib/screens/kos_list_screen.dart`, `lib/screens/kos_detail_screen.dart`, `test/room_availability_test.dart` | `flutter analyze && flutter test test/room_availability_test.dart` serta uji ubah kamar ke `0` dan kembali `> 0` dari dashboard hingga tampil di daftar & detail Android dalam `≤ 3 detik`. | TODO |
 
+## Slice 6: Validasi Kejelasan Lokasi (L2)
+
+| ID | Tujuan | Story & AC | File yang Boleh Diubah | Cara Menguji | Status |
+|---|---|---|---|---|---|
+| T12 | Verifikasi kejelasan informasi lokasi kos saat pemilik menambahkan data, termasuk penyimpanan dan tampilan area serta alamat lengkap. | `US05-AC3` | `test/kos_form_test.dart`, `test/kos_list_screen_test.dart`, `test/kos_detail_test.dart` | Uji pemilik mengisi area dan alamat lengkap, menyimpan data, lalu pastikan informasi tersebut tersimpan di Supabase dan tampil dengan benar pada daftar serta detail kos. | TODO |
+
 ## Catatan Pengujian
 
 - T03: Implementasi dan pengujian fitur Detail Kos, kontak WhatsApp, salin nomor, telepon, dan About telah dilakukan.
